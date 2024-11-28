@@ -5,6 +5,7 @@ import {
   getProfile,
   listAppointment,
   loginUser,
+  paymentRazorpay,
   registerUser,
   updateProfile,
 } from "../controllers/userController.js";
@@ -20,5 +21,6 @@ userRouter.post("/update-profile", upload.single("image"), authUser , updateProf
 userRouter.post("/book-appointment", authUser,bookAppointment);
 userRouter.get("/appointments", authUser,listAppointment);
 userRouter.post("/cancel-appointment", authUser,cancelAppointment);
+userRouter.post("/payment-razorpay", authUser,paymentRazorpay);
 
 export default userRouter;
