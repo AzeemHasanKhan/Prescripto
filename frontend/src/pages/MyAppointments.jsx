@@ -1,12 +1,15 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useState, useEffect, useTransition } from "react";
 import { AppContext } from "../context/AppContext";
 import { toast } from "react-toastify";
 import axios from "axios";
+import {useNavigate} from "react-router-dom"
+
 
 const MyAppointments = () => {
   const { backendUrl, token, getDoctorsData } = useContext(AppContext);
   // console.log(doctors);
   const [appointments, setAppointments] = useState([]);
+  const navigate = useNavigate();
   const months = [
     "",
     "Jan",
@@ -38,7 +41,7 @@ const MyAppointments = () => {
 
       if (data.success) {
         setAppointments(data.appointments.reverse());
-        console.log(data.appointments);
+        // console.log(data.appointments);
       }
     } catch (error) {
       console.error("Failed to fetch user appointments", error);
@@ -67,11 +70,44 @@ const MyAppointments = () => {
     }
   };
 
+  const initPay = (order) => {
+    const options = {
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+      amount: order.amount,
+      currency: order.currency,
+      name: " Appointment Payment",
+      description: "  Appointment Payment",
+      order_id: order.id,
+      receipt:order.receipt,
+      handler: async (response) => {
+        console.log(response);
+        try {
+          const { data } = await axios.post(
+            backendUrl + "/api/user/verifyRazorpay",
+            response,
+            { headers: { token } }
+          );
+          if (data.success) {
+            getUserAppointments();
+            navigate("/my-appointments")
+          }
+        } catch (error) {
+          toast.error(error.response.data.message);
+        }
+      },
+    };
+    const rzp = new window.Razorpay(options);
+    rzp.open();
+  };
+
   const appointmentRazorpay = async (appointmentId)=>{
     try {
+      console.log("first")
       const {data} = await axios.post(backendUrl+"/api/user/payment-razorpay",{appointmentId},{headers:{token}})
-      if (data.succes) {
-        console.log(data.order)
+      console.log("second")
+      console.log(data)
+      if (data.success) {
+        initPay(data.order)
       }
     } catch (error) {
       
